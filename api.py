@@ -51,24 +51,19 @@ class ChatCompletionsCreation(BaseModel):
         return Validators.check_model(value)
 
 
-class GptChatRequest(BaseModel):
-    user_id: str
-    api_key: str
-    chat_completions_creation_obj: ChatCompletionsCreation
-
-    @field_validator("api_key")
-    def check_api_key(cls, value):
-        return Validators.check_api_key(value)
-
-
 class RateLimits(BaseModel):
     model: str
-    tpm: Optional[int] = None
-    rpm: Optional[int] = None
-    rpd: Optional[int] = None
-    tpd: Optional[int] = None
+    tpm: int = Field(ge=0)
+    rpm: int = Field(ge=0)
+    rpd: int = Field(ge=0)
+    tpd: int = Field(ge=0)
+
+    @field_validator("model")
+    def check_model(cls, value):
+        return Validators.check_model(value)
 
 
+# -----  Validation types  -----
 class UserLimits(BaseModel):
     user_id: str
     api_key: str
@@ -88,6 +83,15 @@ class GlobalLimits(BaseModel):
         return Validators.check_api_key(value)
 
 
+class GptChatRequest(BaseModel):
+    user_id: str
+    api_key: str
+    chat_completions_creation_obj: ChatCompletionsCreation
+
+    @field_validator("api_key")
+    def check_api_key(cls, value):
+        return Validators.check_api_key(value)
+
 app = FastAPI()
 api_v = "/api/{api_v}"
 
@@ -97,16 +101,16 @@ def chat(gpt_req: GptChatRequest):
     return {"message": "Validation successful!", "gpt_request": gpt_req}
 
 
-@app.post(f"{api_v}/limits/user")
-def user_limits(user_limits: UserLimits):
-    pass
-
-
 @app.post(f"{api_v}/limits/global")
 def global_limits(global_limits: GlobalLimits):
-    pass
+    return {"message": "Validation successful!", "global_limits": global_limits}
+
+
+@app.post(f"{api_v}/limits/user")
+def user_limits(user_limits: UserLimits):
+    return {"message": "Validation successful!", "user_limits": global_limits}
 
 
 @app.get("/")
-def test():
+def hello_from_root():
     return {"message": "Hello from root endpoint!"}
